@@ -100,10 +100,17 @@ func ServiceName(name string) string {
 // the new public key while still signing with the old private key, then
 // switch.
 //
+// This is the erfanbaheraei/BackPack fork's own key, from v1.9.2 on. v1.9.1
+// still carried upstream's key, so a server running v1.9.1 refuses this fork's
+// signed releases and has to be reinstalled with install.sh once. The private
+// half lives only in the RELEASE_SIGNING_KEY secret (and the maintainer's
+// offline backup); the release workflow refuses to publish anything that does
+// not verify against this key (tools/verifysums).
+//
 // A var rather than a const so a test can pin a key of its own — the same
 // reason node.StorePath and optimize.sysctlFile are vars. Nothing at runtime
 // writes it.
-var ReleasePublicKey = "uDVeC9NUFceAuhg53ZWbBNTVSaMC8tEvtwWmcDZmV9Q="
+var ReleasePublicKey = "2hi6UGNGHO7VQUywKvXLC7AyK4QzhdJMtfAyAyCQOAg="
 
 // TunnelConfigMode is the permission a tunnel's TOML config is written with.
 //

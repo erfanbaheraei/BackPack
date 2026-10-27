@@ -91,11 +91,13 @@ reproducible:
 	@if cmp -s /tmp/backpack-repro-a /tmp/backpack-repro-b; then 	  echo "reproducible: two builds are byte-identical"; 	else 	  echo "NOT reproducible: two builds of the same source differ"; exit 1; 	fi
 	@rm -f /tmp/backpack-repro-a /tmp/backpack-repro-b
 
-# release-key generates the signing pair, once. It prints both halves and keeps
-# neither: the public half is pasted into app.ReleasePublicKey, the private half
-# goes into the RELEASE_SIGNING_KEY repository secret and nowhere else.
+# release-key generates the signing pair, once. It prints only the public half,
+# which is pasted into app.ReleasePublicKey; the private half is written to
+# RELEASE_KEY_OUT (owner-only, never overwritten, never printed) and goes into
+# the RELEASE_SIGNING_KEY repository secret and nowhere else.
 release-key:
-	@go run ./tools/releasekey
+	@test -n "$(RELEASE_KEY_OUT)" || { echo "usage: make release-key RELEASE_KEY_OUT=<file outside the repository>"; exit 2; }
+	@go run ./tools/releasekey -out "$(RELEASE_KEY_OUT)"
 
 install: build
 	install -m 0755 $(BIN) $(BIN_PATH)

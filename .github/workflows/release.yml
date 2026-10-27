@@ -92,6 +92,16 @@ jobs:
           RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
         run: make release
 
+      - name: Verify the signature against the pinned key
+        # A build pins app.ReleasePublicKey and its updater refuses any release
+        # whose SHA256SUMS signature does not verify against it. Publishing an
+        # unsigned release (the secret missing) or one signed with another key
+        # would put out a version no installed server can update to, so it
+        # stops here instead.
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: go run ./tools/verifysums release/SHA256SUMS "$TAG"
+
       - name: Verify the tag matches the built version
         env:
           TAG: ${{ steps.tag.outputs.tag }}

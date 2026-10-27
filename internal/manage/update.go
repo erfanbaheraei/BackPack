@@ -46,8 +46,16 @@ import (
 // live tunnel now installs offline instead; see the README.
 
 func repoURL() string {
+	if repoURLOverride != "" {
+		return repoURLOverride
+	}
 	return fmt.Sprintf("https://github.com/%s/%s", app.RepoOwner, app.RepoName)
 }
+
+// repoURLOverride stands a local server in for the repository, so a test can
+// serve release assets and drive the real fetch-and-verify path. Empty — the
+// repository above — everywhere but in tests; nothing at runtime writes it.
+var repoURLOverride string
 
 // InstallPath returns the install directory recorded at install time (used by
 // the uninstaller), falling back to the standard location.
