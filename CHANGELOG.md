@@ -2,6 +2,32 @@
 
 All notable changes to Backpack are documented here.
 
+## v1.9.1 — 2026-10-27
+
+First release of this fork (based on BackPack v1.9.0 by Amin Mohammadi,
+https://github.com/AminMGMT/BackPack).
+
+### Added
+
+- **Optional carrier bonding for the layer-3 engine — experimental, off by
+  default** (ADR 0006). `carrier = "bond"` runs one tunnel over several
+  datagram carriers at once (`udp`, `pck`, `sni`, `xdi`, `spoof`, `quic`),
+  each with its own direction: an `xdi` path that dials and an `xdi` path that
+  listens can serve the same tunnel, so direct and reverse ICMP work together.
+  Every path is checked with authenticated probes before it carries traffic,
+  including a full-size probe so a path too narrow for the tunnel's MTU is held
+  out. A path whose writes succeed but whose packets go nowhere is noticed and
+  taken out of service; failed paths are retried on a growing backoff, with no
+  panel involved. Traffic is spread in flowlets over paths of similar RTT,
+  while slower ones stay on standby. Refused unless `[l3.bond]
+  experimental = true` is set; tunnels without it behave exactly as before.
+  Not yet measured between two real servers.
+
+### Changed
+
+- The installer and the release updater now fetch from
+  `erfanbaheraei/BackPack`.
+
 ## v1.9.0 — 2026-10-19
 
 ### Added
