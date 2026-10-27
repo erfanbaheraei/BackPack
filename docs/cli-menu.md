@@ -28,6 +28,16 @@ long form. For *how to set a tunnel up*, use the
 | 9 | **Uninstall** | Removes everything Backpack installed. |
 | 10 | **Exit** | |
 
+On a kharej with more than one public address of the family the link uses,
+joining the test (menu or `link apply`) first asks which address to test from;
+**Automatic** — also what a script or a pipe gets — leaves it to the routing
+table. The chosen address carries every exchange with Iran's coordinator, so
+Iran dials the direct tunnels back to it, plus the tcp, tcpmux, stealth and ws
+reverse transports, the direct udp and quic listeners and the path-MTU probe.
+Rows whose engine picks its own source — reverse udp, kcp, quic, xdi, pck; naive,
+xhttp, reality; direct pck, sni, xdi — still leave from the default route, and
+the test says so before it starts.
+
 Connection Test includes **Naive / HTTP2**, **XHTTP / TLS** and **REALITY / Vision**.
 Install the optional pinned helpers on both servers (`BP_HELPERS=naive,xray`);
 a missing helper is shown as **SKIPPED** with its reason. Iran automatically

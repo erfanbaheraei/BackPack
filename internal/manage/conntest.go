@@ -2000,7 +2000,10 @@ func ctAskContext(ctx context.Context, host string, port int, line string) (stri
 	addr := net.JoinHostPort(host, strconv.Itoa(port))
 	var last error
 	for _, network := range []string{"tcp", "udp"} {
-		conn, err := (&net.Dialer{Timeout: 5 * time.Second}).DialContext(ctx, network, addr)
+		// From the chosen source, if there is one: the coordinator records
+		// the address the hello came from and dials the direct tunnels back
+		// to it. See conntestsource.go.
+		conn, err := ctDialer(ctx, network, host, 5*time.Second).DialContext(ctx, network, addr)
 		if err != nil {
 			last = err
 			continue
@@ -2120,6 +2123,7 @@ func runConnTestKharejLink(ctx context.Context, link ConnTestLink, out io.Writer
 				// echoes and speed traffic. Older coordinators ignore this command.
 				_, _ = ctAskContext(ctx, link.Host, link.Coord, "https-probe "+link.Tok+" "+c.Tr+":"+probe)
 			}
+			ctBindReverse(ctx, link.Host, c.Tr, &spec)
 			spec.Name = name
 			body = ctQuiet(spec.Render())
 		case "direct":
@@ -2146,6 +2150,7 @@ func runConnTestKharejLink(ctx context.Context, link ConnTestLink, out io.Writer
 			if ctFamily(link.Host) == "IPv6" {
 				spec.Addr = net.JoinHostPort("::", addrPort(spec.Addr))
 			}
+			spec.Addr = ctBindDirect(ctx, link.Host, c.Tr, spec.Addr)
 			if _, body, err = directBodyFromSpec(spec); err != nil {
 				local[c.Kind+"/"+c.Tr] = err.Error()
 				continue

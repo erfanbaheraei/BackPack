@@ -2,6 +2,27 @@
 
 All notable changes to Backpack are documented here.
 
+## Unreleased
+
+### Added
+
+- **Connection Test: choose the kharej address to test from.** A kharej with
+  more than one public address of a family asks which one to connect to Iran
+  from; Automatic keeps the routing table's choice, and a scripted run is never
+  stopped by the question. It carries the coordinator exchange (so Iran dials
+  the direct tunnels back to it), the tcp-family reverse transports, the direct
+  udp/quic listeners and the PMTU probe. Rows whose engine chooses its own
+  source are named before the test starts.
+
+### Changed
+
+- **Releases are signed with this fork's key.** `app.ReleasePublicKey` is the
+  fork's own; the release workflow refuses to publish a release whose
+  signature does not verify against it (`tools/verifysums`), and
+  `make release-key` writes the private half to a file and never prints it.
+  **A server on v1.9.1 must be reinstalled with install.sh once**: v1.9.1
+  carried upstream's key and refuses this fork's signed releases.
+
 ## v1.9.1 — 2026-10-27
 
 First release of this fork (based on BackPack v1.9.0 by Amin Mohammadi,

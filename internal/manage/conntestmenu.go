@@ -102,9 +102,17 @@ func connTestIranMenu() {
 
 // RunConnTestKharejTUI runs the kharej side and prints the verdict.
 func RunConnTestKharejTUI(raw string) bool {
+	// Asked before anything starts, and only on a server with more than one
+	// address of a family the link uses. See conntestsource.go.
+	sources := ctChooseSources(ctLinkFamilies(raw))
+	if notice := ctSourceNotice(sources); notice != "" {
+		tui.Info(notice)
+	}
+
 	if a, err := parseConnTestLink(raw); err == nil && len(a.Routes) > 0 {
 		ctx, stop := connTestContext()
 		defer stop()
+		ctx = ctWithSources(ctx, sources)
 		board := &ctPathBoard{}
 		paths, err := runConnTestSuiteKharej(ctx, a.Routes, os.Stdout, board.update)
 		board.abandon()
@@ -118,6 +126,7 @@ func RunConnTestKharejTUI(raw string) bool {
 
 	ctx, stop := connTestContext()
 	defer stop()
+	ctx = ctWithSources(ctx, sources)
 	fmt.Println()
 	title := ""
 	if a, err := parseConnTestLink(raw); err == nil {

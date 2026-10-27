@@ -110,7 +110,7 @@ func ctPMTUProbe(ctx context.Context, addr, tok string, size int) bool {
 	if ctFamily(host) == "IPv6" {
 		network, overhead = "udp6", 48
 	}
-	conn, err := (&net.Dialer{}).DialContext(ctx, network, addr)
+	conn, err := ctDialer(ctx, network, host, 0).DialContext(ctx, network, addr)
 	if err != nil {
 		return false
 	}
