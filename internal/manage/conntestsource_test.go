@@ -215,3 +215,64 @@ func TestTheNoticeNamesTheSourceAndTheRowsThatCannotFollowIt(t *testing.T) {
 		}
 	}
 }
+
+// The kharej learns which of its addresses it checked in from — the one Iran
+// dials its direct tunnels back to — and hands it to whoever asked.
+func TestTheKharejRecordsTheAddressItCheckedInFrom(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ln.Close()
+	go func() {
+		for {
+			c, err := ln.Accept()
+			if err != nil {
+				return
+			}
+			bufio.NewReader(c).ReadString('\n')
+			c.Write([]byte("ok\n"))
+			c.Close()
+		}
+	}()
+	port := ln.Addr().(*net.TCPAddr).Port
+
+	ctx := ctWithSources(context.Background(), ctSources{"IPv4": net.ParseIP("127.0.0.2")})
+	ctx, seen := ctWithKharejSeen(ctx)
+	reply, from, err := ctAskFrom(ctx, "127.0.0.1", port, "hello")
+	if err != nil || reply != "ok" {
+		t.Fatalf("ask: %q %v", reply, err)
+	}
+	if got := ctAddrIP(from); got != "127.0.0.2" {
+		t.Fatalf("checked in from %q, want the chosen 127.0.0.2", got)
+	}
+	ctNoteKharej(ctx, ctAddrIP(from))
+	if seen.get() != "127.0.0.2" {
+		t.Fatalf("recorded %q", seen.get())
+	}
+
+	// Nobody asked: noting is harmless, and reading a missing recorder is "".
+	ctNoteKharej(context.Background(), "127.0.0.9")
+	var none *ctKharejSeen
+	if none.get() != "" {
+		t.Fatal("a nil recorder returned an address")
+	}
+}
+
+// Both ends of a path are named, on the board and in the comparison.
+func TestAPathIsNamedByBothItsEnds(t *testing.T) {
+	waiting := ConnTestPath{Family: "IPv4", Host: "5.160.109.45", State: "waiting"}
+	if got := ctPathTitle(waiting); got != "IPv4 · Iran 5.160.109.45" {
+		t.Fatalf("before check-in: %q", got)
+	}
+	done := ConnTestPath{Family: "IPv4", Host: "5.160.109.45", Kharej: "198.18.10.2", State: "done",
+		Best: ConnTestBest{Transport: "reverse wssmux", Mbps: 807.45, UploadMbps: 653.49, RTTms: 115}}
+	if got := ctPathTitle(done); got != "IPv4 · Iran 5.160.109.45 · Kharej 198.18.10.2" {
+		t.Fatalf("after check-in: %q", got)
+	}
+	var out strings.Builder
+	ctSuiteSummary(&out, []ConnTestPath{done})
+	if !strings.Contains(out.String(), "IPv4 · Iran 5.160.109.45 · Kharej 198.18.10.2 · done · reverse wssmux") {
+		t.Fatalf("summary does not name both ends:\n%s", out.String())
+	}
+}

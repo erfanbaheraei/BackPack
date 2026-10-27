@@ -232,6 +232,15 @@ func newCTBoard(out io.Writer, title string) *ctBoard {
 	return b
 }
 
+// setTitle renames the board once something learned after it was drawn — the
+// kharej address, which is known only once the kharej has checked in — belongs
+// in its heading. The next redraw shows it.
+func (b *ctBoard) setTitle(title string) {
+	b.mu.Lock()
+	b.title = title
+	b.mu.Unlock()
+}
+
 func ctIsTerminal(w io.Writer) bool {
 	f, ok := w.(*os.File)
 	if !ok {

@@ -13,6 +13,11 @@ All notable changes to Backpack are documented here.
   the direct tunnels back to it), the tcp-family reverse transports, the direct
   udp/quic listeners and the PMTU probe. Rows whose engine chooses its own
   source are named before the test starts.
+- **Connection Test names both ends of a path.** The board heading and the IP
+  path comparison read `IPv4 · Iran <address> · Kharej <address>` on both
+  servers: Iran shows the address it heard the kharej from, the kharej the one
+  it checked in from (they differ only across NAT), and the kharej prints
+  `Checked in with the Iran server from <address>.` when it joins.
 
 ### Changed
 

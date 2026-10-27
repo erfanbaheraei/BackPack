@@ -1997,6 +1997,14 @@ func (c *ctCoordinator) close() {
 // ctAskContext puts one question to the coordinator over TCP and then UDP,
 // stopping the dial and any pending reply when the test is cancelled.
 func ctAskContext(ctx context.Context, host string, port int, line string) (string, error) {
+	reply, _, err := ctAskFrom(ctx, host, port, line)
+	return reply, err
+}
+
+// ctAskFrom is ctAskContext that also reports the local address the answered
+// question left from — this server's address toward Iran, as the kernel or the
+// operator's choice made it.
+func ctAskFrom(ctx context.Context, host string, port int, line string) (string, net.Addr, error) {
 	addr := net.JoinHostPort(host, strconv.Itoa(port))
 	var last error
 	for _, network := range []string{"tcp", "udp"} {
@@ -2024,8 +2032,9 @@ func ctAskContext(ctx context.Context, host string, port int, line string) (stri
 			}
 			if err == nil && n > 0 {
 				stopClose()
+				local := conn.LocalAddr()
 				conn.Close()
-				return strings.TrimSpace(string(buf[:n])), nil
+				return strings.TrimSpace(string(buf[:n])), local, nil
 			}
 		}
 		stopClose()
@@ -2035,7 +2044,7 @@ func ctAskContext(ctx context.Context, host string, port int, line string) (stri
 	if last == nil {
 		last = errors.New("no answer")
 	}
-	return "", last
+	return "", nil, last
 }
 
 // RunConnTestKharej is the kharej's side of a test: it builds its end of
@@ -2181,11 +2190,16 @@ func runConnTestKharejLink(ctx context.Context, link ConnTestLink, out io.Writer
 
 	// Checking in: every few seconds until the Iran side hears it.
 	for {
-		reply, err := ctAskContext(ctx, link.Host, link.Coord, "hello "+link.Tok)
+		reply, from, err := ctAskFrom(ctx, link.Host, link.Coord, "hello "+link.Tok)
 		if err == nil && reply == "stopped" {
 			return nil, ConnTestBest{}, errConnTestStopped
 		}
 		if err == nil && reply == "ok" {
+			// The address Iran now dials this server's direct tunnels back to.
+			if ip := ctAddrIP(from); ip != "" {
+				ctNoteKharej(ctx, ip)
+				fmt.Fprintf(out, "Checked in with the Iran server from %s.\n", ip)
+			}
 			break
 		}
 		if ctx.Err() != nil {

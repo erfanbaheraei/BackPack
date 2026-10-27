@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/backpack/backpack/internal/tui"
@@ -99,6 +100,50 @@ func ctBindDirect(ctx context.Context, host, tr, addr string) string {
 		return net.JoinHostPort(ip.String(), addrPort(addr))
 	}
 	return addr
+}
+
+// ctKharejSeen carries back, from a kharej run, the address it checked in from,
+// so the board and the path summary can name both ends of the path.
+type ctKharejSeen struct {
+	mu   sync.Mutex
+	addr string
+}
+
+type ctKharejSeenKey struct{}
+
+func ctWithKharejSeen(ctx context.Context) (context.Context, *ctKharejSeen) {
+	s := &ctKharejSeen{}
+	return context.WithValue(ctx, ctKharejSeenKey{}, s), s
+}
+
+// get is safe on nil, so a caller that kept no recorder reads "".
+func (s *ctKharejSeen) get() string {
+	if s == nil {
+		return ""
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.addr
+}
+
+// ctNoteKharej records the check-in address where a caller asked for it.
+func ctNoteKharej(ctx context.Context, ip string) {
+	if s, _ := ctx.Value(ctKharejSeenKey{}).(*ctKharejSeen); s != nil {
+		s.mu.Lock()
+		s.addr = ip
+		s.mu.Unlock()
+	}
+}
+
+// ctAddrIP is the IP of a TCP or UDP address, without the port.
+func ctAddrIP(a net.Addr) string {
+	switch v := a.(type) {
+	case *net.TCPAddr:
+		return v.IP.String()
+	case *net.UDPAddr:
+		return v.IP.String()
+	}
+	return ""
 }
 
 // ctLocalAddresses is swapped by tests; the real one reads this host's

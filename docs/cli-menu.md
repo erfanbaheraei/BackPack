@@ -36,7 +36,9 @@ Iran dials the direct tunnels back to it, plus the tcp, tcpmux, stealth and ws
 reverse transports, the direct udp and quic listeners and the path-MTU probe.
 Rows whose engine picks its own source — reverse udp, kcp, quic, xdi, pck; naive,
 xhttp, reality; direct pck, sni, xdi — still leave from the default route, and
-the test says so before it starts.
+the test says so before it starts. Both servers name the two ends of every path
+in the results — `IPv4 · Iran <address> · Kharej <address>` — so it is plain
+which kharej address the figures belong to.
 
 Connection Test includes **Naive / HTTP2**, **XHTTP / TLS** and **REALITY / Vision**.
 Install the optional pinned helpers on both servers (`BP_HELPERS=naive,xray`);

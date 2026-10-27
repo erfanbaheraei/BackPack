@@ -127,18 +127,25 @@ func RunConnTestKharejTUI(raw string) bool {
 	ctx, stop := connTestContext()
 	defer stop()
 	ctx = ctWithSources(ctx, sources)
+	ctx, seen := ctWithKharejSeen(ctx)
 	fmt.Println()
-	title := ""
-	if a, err := parseConnTestLink(raw); err == nil {
-		title = a.Host
+	// Named by both ends; the kharej end is known once it has checked in,
+	// which is before the first row arrives.
+	title := func() string {
+		a, err := parseConnTestLink(raw)
+		if err != nil {
+			return ""
+		}
+		return ctPathTitle(ConnTestPath{Family: ctFamily(a.Host), Host: a.Host, Kharej: seen.get()})
 	}
 	ctMenuStage(os.Stdout, "1", "Connecting to Iran", "Fetching the test settings and starting this side's tunnels.")
 	var board *ctBoard
 	results, best, err := RunConnTestKharej(ctx, raw, os.Stdout, func(rows []ConnTestResult) {
 		if board == nil {
 			fmt.Println()
-			board = newCTBoard(os.Stdout, title)
+			board = newCTBoard(os.Stdout, title())
 		}
+		board.setTitle(title())
 		board.setAll(rows)
 	})
 	if err != nil {
@@ -149,7 +156,7 @@ func RunConnTestKharejTUI(raw string) bool {
 		return false
 	}
 	if board == nil {
-		board = newCTBoard(os.Stdout, title)
+		board = newCTBoard(os.Stdout, title())
 	}
 	board.finish(results, best)
 	return true

@@ -125,9 +125,10 @@ func (b *ctPathBoard) update(i int, p ConnTestPath) {
 	if b.board == nil || b.index != i {
 		b.abandon()
 		fmt.Println()
-		b.board = newCTBoard(os.Stdout, p.Family+" · "+p.Host)
+		b.board = newCTBoard(os.Stdout, ctPathTitle(p))
 		b.index = i
 	}
+	b.board.setTitle(ctPathTitle(p))
 	b.board.setAll(p.Rows)
 	if p.State == "done" {
 		b.board.finish(p.Rows, p.Best)
@@ -136,10 +137,22 @@ func (b *ctPathBoard) update(i int, p ConnTestPath) {
 	}
 }
 
+// ctPathTitle names a path by both of its ends: the Iran address dialled, and
+// the kharej address the test ran from once the kharej has checked in. Iran
+// records the address it heard the kharej from; the kharej, the one it sent
+// from. They differ only across NAT.
+func ctPathTitle(p ConnTestPath) string {
+	title := p.Family + " · Iran " + p.Host
+	if p.Kharej != "" {
+		title += " · Kharej " + p.Kharej
+	}
+	return title
+}
+
 func ctSuiteSummary(out io.Writer, paths []ConnTestPath) {
 	fmt.Fprintln(out, "\nIP path comparison:")
 	for _, p := range paths {
-		fmt.Fprintf(out, "  %s · %s · %s", p.Family, p.Host, p.State)
+		fmt.Fprintf(out, "  %s · %s", ctPathTitle(p), p.State)
 		if p.Error != "" {
 			fmt.Fprintf(out, " · %s", p.Error)
 		}

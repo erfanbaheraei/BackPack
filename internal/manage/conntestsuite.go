@@ -392,9 +392,13 @@ func runConnTestSuiteKharej(ctx context.Context, routes []connTestAddr, out io.W
 		// Bound a failed result channel to this path, not the lifetime of
 		// the whole suite, so a later family still gets its turn.
 		pathCtx, cancelPath := context.WithTimeout(ctx, ConnTestRunTime()+connTestSlack)
-		rows, best, err := runConnTestKharejLink(pathCtx, links[i], out, func(rows []ConnTestResult) { paths[i].Rows = rows; report(i) })
+		pathCtx, seen := ctWithKharejSeen(pathCtx)
+		rows, best, err := runConnTestKharejLink(pathCtx, links[i], out, func(rows []ConnTestResult) {
+			paths[i].Rows, paths[i].Kharej = rows, seen.get()
+			report(i)
+		})
 		cancelPath()
-		paths[i].Rows, paths[i].Best = rows, best
+		paths[i].Rows, paths[i].Best, paths[i].Kharej = rows, best, seen.get()
 		paths[i].State = "done"
 		if err != nil {
 			if errors.Is(err, errConnTestStopped) || ctx.Err() != nil {
